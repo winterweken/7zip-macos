@@ -66,6 +66,18 @@ rm "$DOWNLOAD_FILE"
 
 echo -e "${GREEN}Source code extracted successfully!${NC}"
 echo ""
+
+# Apply fixes
+echo -e "${YELLOW}Applying build fixes...${NC}"
+if [ -f "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak" ]; then
+    sed -i.bak 's/-Wno-poison-system-directories/-Wno-poison-system-directories -Wno-switch-default/' "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak"
+    rm -f "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak.bak"
+    echo -e "${GREEN}Fix applied: suppressed -Wswitch-default in warn_clang_mac.mak${NC}"
+else
+    echo -e "${RED}Warning: warn_clang_mac.mak not found, skipping fix${NC}"
+fi
+echo ""
+
 echo "Source location: $SOURCE_DIR"
 echo ""
 
