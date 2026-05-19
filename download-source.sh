@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -8,10 +10,10 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-SEVEN_ZIP_VERSION="2409"
-SEVEN_ZIP_FULL_VERSION="24.09"
+SEVEN_ZIP_VERSION="2601"
+SEVEN_ZIP_FULL_VERSION="26.01"
 SOURCE_URL="https://www.7-zip.org/a/7z${SEVEN_ZIP_VERSION}-src.tar.xz"
-SOURCE_DIR="source"
+SOURCE_DIR="$SCRIPT_DIR/source"
 DOWNLOAD_FILE="7z${SEVEN_ZIP_VERSION}-src.tar.xz"
 
 echo -e "${GREEN}7-Zip Source Download Script${NC}"
@@ -41,16 +43,16 @@ fi
 # Download source code
 echo -e "${YELLOW}Downloading 7-Zip ${SEVEN_ZIP_FULL_VERSION} source code...${NC}"
 if command -v curl &> /dev/null; then
-    curl -L -o "$DOWNLOAD_FILE" "$SOURCE_URL"
+    curl -fL -o "$SCRIPT_DIR/$DOWNLOAD_FILE" "$SOURCE_URL"
 elif command -v wget &> /dev/null; then
-    wget -O "$DOWNLOAD_FILE" "$SOURCE_URL"
+    wget -O "$SCRIPT_DIR/$DOWNLOAD_FILE" "$SOURCE_URL"
 else
     echo -e "${RED}Error: Neither curl nor wget found. Please install one of them.${NC}"
     exit 1
 fi
 
 # Verify download
-if [ ! -f "$DOWNLOAD_FILE" ]; then
+if [ ! -f "$SCRIPT_DIR/$DOWNLOAD_FILE" ]; then
     echo -e "${RED}Error: Download failed!${NC}"
     exit 1
 fi
@@ -59,10 +61,10 @@ echo -e "${GREEN}Download complete!${NC}"
 echo -e "${YELLOW}Extracting source code...${NC}"
 
 # Extract source code
-tar -xf "$DOWNLOAD_FILE" -C "$SOURCE_DIR"
+tar -xf "$SCRIPT_DIR/$DOWNLOAD_FILE" -C "$SOURCE_DIR"
 
 # Clean up downloaded archive
-rm "$DOWNLOAD_FILE"
+rm "$SCRIPT_DIR/$DOWNLOAD_FILE"
 
 echo -e "${GREEN}Source code extracted successfully!${NC}"
 echo ""
@@ -70,9 +72,13 @@ echo ""
 # Apply fixes
 echo -e "${YELLOW}Applying build fixes...${NC}"
 if [ -f "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak" ]; then
-    sed -i.bak 's/-Wno-poison-system-directories/-Wno-poison-system-directories -Wno-switch-default/' "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak"
-    rm -f "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak.bak"
-    echo -e "${GREEN}Fix applied: suppressed -Wswitch-default in warn_clang_mac.mak${NC}"
+    if grep -q -- '-Wno-switch-default' "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak"; then
+        echo -e "${GREEN}warn_clang_mac.mak already includes -Wno-switch-default${NC}"
+    else
+        sed -i.bak 's/-Wno-poison-system-directories/-Wno-poison-system-directories -Wno-switch-default/' "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak"
+        rm -f "$SOURCE_DIR/CPP/7zip/warn_clang_mac.mak.bak"
+        echo -e "${GREEN}Fix applied: suppressed -Wswitch-default in warn_clang_mac.mak${NC}"
+    fi
 else
     echo -e "${RED}Warning: warn_clang_mac.mak not found, skipping fix${NC}"
 fi

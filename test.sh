@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -13,7 +15,9 @@ echo "================="
 echo ""
 
 # Check if binaries exist
-if [ ! -d "build/bin" ] || [ -z "$(ls -A build/bin)" ]; then
+BIN_DIR="$SCRIPT_DIR/build/bin"
+
+if [ ! -d "$BIN_DIR" ] || [ -z "$(ls -A "$BIN_DIR")" ]; then
     echo -e "${RED}Error: No binaries found in build/bin${NC}"
     echo "Please run './build.sh' first to compile 7-Zip."
     exit 1
@@ -22,8 +26,8 @@ fi
 # Find the main binary (prefer 7zz, then 7za, then 7z)
 SEVEN_ZIP=""
 for candidate in "7zz" "7za" "7z"; do
-    if [ -f "build/bin/$candidate" ]; then
-        SEVEN_ZIP="./build/bin/$candidate"
+    if [ -f "$BIN_DIR/$candidate" ]; then
+        SEVEN_ZIP="$BIN_DIR/$candidate"
         break
     fi
 done
@@ -37,7 +41,7 @@ echo -e "${BLUE}Using binary: $SEVEN_ZIP${NC}"
 echo ""
 
 # Create test directory
-TEST_DIR="test_temp"
+TEST_DIR="$SCRIPT_DIR/test_temp"
 rm -rf "$TEST_DIR"
 mkdir -p "$TEST_DIR"
 cd "$TEST_DIR"
@@ -76,48 +80,48 @@ echo -e "${BLUE}Running tests...${NC}"
 echo ""
 
 # Test 1: Basic compression (7z format)
-run_test "7z compression" "../$SEVEN_ZIP a test.7z test1.txt test2.txt"
+run_test "7z compression" "\"$SEVEN_ZIP\" a test.7z test1.txt test2.txt"
 
 # Test 2: List archive contents
-run_test "List archive" "../$SEVEN_ZIP l test.7z"
+run_test "List archive" "\"$SEVEN_ZIP\" l test.7z"
 
 # Test 3: Extract archive
-run_test "Extract archive" "mkdir extract1 && cd extract1 && ../../$SEVEN_ZIP x ../test.7z && cd .."
+run_test "Extract archive" "mkdir extract1 && cd extract1 && \"$SEVEN_ZIP\" x ../test.7z && cd .."
 
 # Test 4: Verify extracted files
 run_test "Verify extraction" "diff test1.txt extract1/test1.txt && diff test2.txt extract1/test2.txt"
 
 # Test 5: ZIP format support
-run_test "ZIP compression" "../$SEVEN_ZIP a test.zip test1.txt"
+run_test "ZIP compression" "\"$SEVEN_ZIP\" a test.zip test1.txt"
 
 # Test 6: GZIP format support
-run_test "GZIP compression" "../$SEVEN_ZIP a test.gz test1.txt"
+run_test "GZIP compression" "\"$SEVEN_ZIP\" a test.gz test1.txt"
 
 # Test 7: TAR format support
-run_test "TAR compression" "../$SEVEN_ZIP a test.tar test1.txt test2.txt"
+run_test "TAR compression" "\"$SEVEN_ZIP\" a test.tar test1.txt test2.txt"
 
 # Test 8: Directory compression
-run_test "Directory compression" "../$SEVEN_ZIP a dir.7z subdir/"
+run_test "Directory compression" "\"$SEVEN_ZIP\" a dir.7z subdir/"
 
 # Test 9: Compression levels
-run_test "Compression level 0" "../$SEVEN_ZIP a -mx=0 fast.7z test1.txt"
-run_test "Compression level 9" "../$SEVEN_ZIP a -mx=9 ultra.7z test1.txt"
+run_test "Compression level 0" "\"$SEVEN_ZIP\" a -mx=0 fast.7z test1.txt"
+run_test "Compression level 9" "\"$SEVEN_ZIP\" a -mx=9 ultra.7z test1.txt"
 
 # Test 10: Password protection
-run_test "Password protection" "../$SEVEN_ZIP a -pSecretPass encrypted.7z test1.txt"
-run_test "Password extraction" "mkdir extract2 && cd extract2 && ../../$SEVEN_ZIP x -pSecretPass ../encrypted.7z && cd .."
+run_test "Password protection" "\"$SEVEN_ZIP\" a -pSecretPass encrypted.7z test1.txt"
+run_test "Password extraction" "mkdir extract2 && cd extract2 && \"$SEVEN_ZIP\" x -pSecretPass ../encrypted.7z && cd .."
 
 # Test 11: Binary file compression
-run_test "Binary file compression" "../$SEVEN_ZIP a binary.7z binary.dat"
+run_test "Binary file compression" "\"$SEVEN_ZIP\" a binary.7z binary.dat"
 
 # Test 12: Update archive
-run_test "Update archive" "echo 'Updated content' > test1.txt && ../$SEVEN_ZIP u test.7z test1.txt"
+run_test "Update archive" "echo 'Updated content' > test1.txt && \"$SEVEN_ZIP\" u test.7z test1.txt"
 
 # Test 13: Test archive integrity
-run_test "Test archive integrity" "../$SEVEN_ZIP t test.7z"
+run_test "Test archive integrity" "\"$SEVEN_ZIP\" t test.7z"
 
 # Test 14: Multi-threading (if supported)
-run_test "Multi-threading" "../$SEVEN_ZIP a -mmt=on threaded.7z test1.txt test2.txt"
+run_test "Multi-threading" "\"$SEVEN_ZIP\" a -mmt=on threaded.7z test1.txt test2.txt"
 
 echo ""
 echo -e "${BLUE}Test Results:${NC}"

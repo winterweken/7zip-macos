@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -18,7 +20,9 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Check if binaries exist
-if [ ! -d "build/bin" ] || [ -z "$(ls -A build/bin)" ]; then
+BIN_DIR="$SCRIPT_DIR/build/bin"
+
+if [ ! -d "$BIN_DIR" ] || [ -z "$(ls -A "$BIN_DIR")" ]; then
     echo -e "${RED}Error: No binaries found in build/bin${NC}"
     echo "Please run './build.sh' first to compile 7-Zip."
     exit 1
@@ -31,7 +35,7 @@ echo -e "${YELLOW}Installing 7-Zip binaries to $INSTALL_DIR${NC}"
 echo ""
 
 # Copy binaries
-for binary in build/bin/*; do
+for binary in "$BIN_DIR"/*; do
     if [ -f "$binary" ]; then
         binary_name=$(basename "$binary")
         echo -n "Installing $binary_name... "
@@ -47,7 +51,7 @@ echo ""
 
 # Verify installation
 echo -e "${YELLOW}Verifying installation...${NC}"
-for binary in build/bin/*; do
+for binary in "$BIN_DIR"/*; do
     binary_name=$(basename "$binary")
     if command -v "$binary_name" &> /dev/null; then
         version=$("$binary_name" 2>&1 | grep -i "7-Zip" | head -n 1 || echo "installed")

@@ -10,9 +10,9 @@
 ## 📦 Distribution
 
 - [ ] **Homebrew Support**
-  - Create a custom tap repository.
-  - Write a Homebrew formula (`7zip-macos.rb`) for easy installation.
-  - Submit to Homebrew-core (long term goal).
+  - Homebrew formula scaffold added in `Formula/7zip-macos.rb`.
+  - Create and publish a custom tap repository so users can install with `brew install <tap>/7zip-macos`.
+  - Submit to Homebrew-core (long term goal, optional).
 - [ ] **Universal Binaries (Fat Binaries)**
   - Update `build.sh` to support creating universal binaries using `lipo`.
   - Allow users to choose between thin (arch-specific) or fat (universal) binaries.
